@@ -643,9 +643,11 @@ static void modeset_draw(int dlen, char* data) {
 					b = 0;
 				}
 
-				printf("r: %x\n", r);
-				printf("g: %x\n", g);
-				printf("b: %x\n", b);
+				printf("r: %x\t", r);
+				printf("g: %x\t", g);
+				printf("b: %x\t", b);
+				printf("j: %x\t", j);
+				printf("k: %x\n", k);
 				off = iter->stride * j + k * 4;
 				*(uint32_t*)&iter->map[off] = (r << 16) | (g << 8) | b;
 			}

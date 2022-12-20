@@ -1,10 +1,10 @@
 FLAGS=`pkg-config --cflags --libs libdrm`
-FLAGS+=-Wall -O0 -g
+FLAGS+=-Wall -O3
 FLAGS+=-D_FILE_OFFSET_BITS=64
 
 all:
-	gcc -o modeset-double-buffered modeset-double-buffered.c $(FLAGS)
-	gcc -o modeset modeset.c $(FLAGS)
-	gcc -o custom custom.c $(FLAGS)
-	gcc -o modeset-vsync modeset-vsync.c $(FLAGS)
-	gcc -o modeset-atomic modeset-atomic.c $(FLAGS)
+	clang -o modeset-double-buffered modeset-double-buffered.c $(FLAGS)
+	clang -o modeset modeset.c $(FLAGS)
+	clang -o custom custom.c $(FLAGS)
+	clang -o modeset-vsync modeset-vsync.c $(FLAGS)
+	clang -o modeset-atomic modeset-atomic.c $(FLAGS)

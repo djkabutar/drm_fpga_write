@@ -32,6 +32,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -488,6 +489,20 @@ err_destroy:
 	return ret;
 }
 
+char *str_reverse_in_place(char *str, int len)
+{
+    char *p1 = str;
+    char *p2 = str + len - 1;
+
+    while (p1 < p2) {
+        char tmp = *p1;
+        *p1++ = *p2;
+        *p2-- = tmp;
+    }
+
+    return str;
+}
+
 /*
  * Finally! We have a connector with a suitable CRTC. We know which mode we want
  * to use and we have a framebuffer of the correct size that we can write to.
@@ -549,7 +564,8 @@ int main(int argc, char** argv) {
 	}
 
 	/* draw some colors for 5seconds */
-	if (argc > 1) modeset_draw(strlen(argv[1]), (char*)argv[1]);
+	int dlen = strlen(argv[1]);
+	if (argc > 1) modeset_draw(dlen, str_reverse_in_place((char*)argv[1], dlen));
 
 //	usleep(5000000);
 
@@ -611,24 +627,29 @@ static void modeset_draw(int dlen, char* data) {
 	struct fpga_frame* f;
 	uint8_t r, g, b;
 	bool r_up, g_up, b_up;
-	unsigned int i, j, k=0, off;
+	unsigned int i, j, k=0, off, l;
 	struct modeset_dev* iter;
 	char* c;
+	clock_t start, end;
 
-	c = (char *)malloc(sizeof(char) * (dlen+12));
+	c = (char *)malloc(sizeof(char) * (dlen + 12));
 
 	int sof[12] = {
-			0xEA, 0xFF, 0x00, 
-			0x00, 0x00, 0x01, 
+			0xEA, 0xFF, 0x99, 
+			0x88, 0x00, 0x01, 
 			0x01, 0x00, 0x00, 
 			0x00, 0x06, 0x00
 			};
+	sof[10] = dlen;
 	// *c = *sof;
 	for (i = 0; i < 12; i++)
 		c[i] = sof[i];
 	for (i = 0; i < dlen; i++) 
 		c[i+12] = data[i];
+	// for (l = 0; l < 128; l++) {
+	
 	for (iter = modeset_list; iter; iter = iter->next) {
+		start = clock();
 		for(j = 0; j < iter->height; j++) {
 			int val;
 			for (k = 0; k < iter->width; k++) {
@@ -643,17 +664,21 @@ static void modeset_draw(int dlen, char* data) {
 					b = 0;
 				}
 
-				printf("r: %x\t", r);
+				/*printf("r: %x\t", r);
 				printf("g: %x\t", g);
 				printf("b: %x\t", b);
-				printf("j: %x\t", j);
-				printf("k: %x\n", k);
+				printf("j: %d\t", j);
+				printf("k: %d\n", k);*/
 				off = iter->stride * j + k * 4;
 				*(uint32_t*)&iter->map[off] = (r << 16) | (g << 8) | b;
 			}
 		}
+		end = clock() - start;
+	// }
+	// usleep(100);
 	}
 	free(c);
+	printf("Time Taken: %lf\n", ((double) end) / CLOCKS_PER_SEC);
 }	
 
 /*

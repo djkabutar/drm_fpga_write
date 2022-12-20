@@ -647,21 +647,24 @@ static void modeset_draw(int dlen, char* data) {
 	for (i = 0; i < dlen; i++) 
 		c[i+12] = data[i];
 	// for (l = 0; l < 128; l++) {
-	
+	int total_length = dlen + 12;
 	for (iter = modeset_list; iter; iter = iter->next) {
 		start = clock();
 		for(j = 0; j < iter->height; j++) {
 			int val;
+			int width = iter->width * j;
+			int stride_off = iter->stride * j;
 			for (k = 0; k < iter->width; k++) {
-				if ((j * iter->width) + (k * 3) < dlen + 12) {
-					val = (j * iter->width) + (k * 3);
+				int pix = k * 3;
+				if (width + pix < total_length) {
+					val = width + pix;
 					r = c[val];
 					g = c[val + 1];
 					b = c[val + 2];
+					off = width + pix;
+					*(uint32_t*)&iter->map[off] = (r << 16) | (g << 8) | b;
 				} else {
-					r = 0;
-					g = 0;
-					b = 0;
+					*(uint32_t*)&iter->map[off] = 0;
 				}
 
 				/*printf("r: %x\t", r);
@@ -669,8 +672,6 @@ static void modeset_draw(int dlen, char* data) {
 				printf("b: %x\t", b);
 				printf("j: %d\t", j);
 				printf("k: %d\n", k);*/
-				off = iter->stride * j + k * 4;
-				*(uint32_t*)&iter->map[off] = (r << 16) | (g << 8) | b;
 			}
 		}
 		end = clock() - start;
